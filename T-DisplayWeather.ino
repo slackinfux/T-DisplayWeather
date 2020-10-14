@@ -1,5 +1,5 @@
 // Weather sensor program for TTGO T-Display w/onboard TFT + BME280 sensor
-
+#define FS_NO_GLOBALS
 #define SPWIDTH  240                 // sprite width
 #define SPHEIGHT 135                 // sprite height
 
@@ -35,15 +35,19 @@ long lastUpdate = 0;
 Adafruit_BME280 bme;                  // BME sensor instance
 TFT_eSPI tft = TFT_eSPI();            // tft instance
 U8g2_for_TFT_eSPI u8g2;               // u8g2 font instance
+U8g2_for_TFT_eSPI u8g2x;              
 TFT_eSprite spr = TFT_eSprite(&tft);  // configure sprites for flicker free updates
+TFT_eSprite spr1 = TFT_eSprite(&tft);
 EasyButton button1(0);                // setup button on pin 0
 
 void setup() {
 
   tft.begin();                        // Enable the display
   tft.setRotation(3);                 // set display rotation to landscape
-  u8g2.begin(tft);                    // Enable the Font renderer
+  u8g2.begin(spr);                    // Enable the Font renderer
+  u8g2x.begin(spr1);
   bme.begin(0x76, &Wire);             // Enable the bme280
+ 
   if (!SPIFFS.begin()) {              // init SPIFFS
     while (1) yield();                // Stay here twiddling thumbs waiting for SPIFFS
   }
@@ -89,101 +93,89 @@ void readSensors() {
 
 void onPress1() {                     // do something when the button is pressed
   displayMode ++;                     // increment the display mode
-  tft.fillScreen(TFT_BLACK);          // clear the display
   drawScreen();                       // draw the screen
 }
 //end onPress1
 
 void writeTemp() {
-  
+
   // Draw Sensor Output
 
-  String fontSmall = "Interceptor28"; // custom font
-  String fontLarge  = "Interceptor72";// custom font
-  // draw titles
+  String fontSmall = "Interceptor28";
+  String fontLarge  = "Interceptor72";
+  spr.createSprite(SPWIDTH, SPHEIGHT);
+  spr.fillSprite(TFT_BLACK);
   u8g2.setForegroundColor(TFT_RED);
   u8g2.setFont(u8g2_font_helvR14_tf);
   u8g2.setFontMode(1);
   u8g2.setCursor(0, 20);
   u8g2.print("Temperature (°F)");
+  //  u8g2.drawStr (119 - (u8g2.getUTF8Width("Temperature")/2), 20, "Temperature");
   u8g2.setCursor(0, 73);
   u8g2.print("Hi:");
   u8g2.setCursor(0, 113);
-  u8g2.print("Lo:"); 
-  // draw lines 
-  tft.drawFastHLine(0, 30, 239, TFT_CYAN);
-  tft.drawFastVLine(95, 30, 105, TFT_CYAN); 
-  // draw the numbers as a transparent sprite to prevent flicker
-  spr.createSprite(SPWIDTH, SPHEIGHT);
-  spr.fillSprite(TFT_TRANSPARENT);
+  u8g2.print("Lo:");
+  spr.drawFastHLine(0, 30, 239, TFT_CYAN);
+  spr.drawFastVLine(95, 30, 105, TFT_CYAN);
   spr.setTextColor(TFT_CYAN);
-  spr.fillRect(25, 31, 65, 100, TFT_BLACK);
   spr.loadFont(fontSmall);
   spr.drawRightString(cTempHi, 85, 55, GFXFF);
   spr.drawRightString(cTempLo, 85, 95, GFXFF);
   spr.unloadFont();
-  spr.fillRect(96, 31, 239, 135, TFT_BLACK);
   spr.loadFont(fontLarge);
   spr.drawRightString(cTempF, 239, 60, GFXFF);
   spr.unloadFont();
-  spr.pushSprite(0, 0, TFT_TRANSPARENT);
-  spr.deleteSprite(); 
+  spr.pushSprite(0, 0);
+  spr.deleteSprite();
 
 }
 
 void writeHumid() {
-  
+
   // Draw Sensor Output
 
   String fontSmall = "Interceptor28";
   String fontLarge  = "Interceptor72";
-  // draw titles 
+  spr.createSprite(SPWIDTH, SPHEIGHT);
+  spr.fillSprite(TFT_BLACK);
   u8g2.setForegroundColor(TFT_RED);
   u8g2.setFont(u8g2_font_helvR14_tr);
   u8g2.setFontMode(1);
   u8g2.setCursor(0, 20);
   u8g2.print("Humidity (%)");
+  //  u8g2.drawStr (119 - (u8g2.getUTF8Width("Humidity")/2), 20, "Humidity");
   u8g2.setCursor(0, 73);
   u8g2.print("Hi:");
   u8g2.setCursor(0, 113);
-  u8g2.print("Lo:"); 
-  // draw lines
-  tft.drawFastHLine(0, 30, 239, TFT_CYAN);
-  tft.drawFastVLine(95, 30, 105, TFT_CYAN); 
-  // draw the numbers as a transparent sprite to prevent flicker
-  spr.createSprite(SPWIDTH, SPHEIGHT);
-  spr.fillSprite(TFT_TRANSPARENT);
+  u8g2.print("Lo:");
+  spr.drawFastHLine(0, 30, 239, TFT_CYAN);
+  spr.drawFastVLine(95, 30, 105, TFT_CYAN);
   spr.setTextColor(TFT_CYAN);
-  spr.fillRect(25, 31, 65, 100, TFT_BLACK);
   spr.loadFont(fontSmall);
   spr.drawRightString(cHumidHi, 85, 55, GFXFF);
   spr.drawRightString(cHumidLo, 85, 95, GFXFF);
   spr.unloadFont();
-  spr.fillRect(96, 31, 239, 135, TFT_BLACK);
   spr.loadFont(fontLarge);
   spr.drawRightString(cHumid, 239, 60, GFXFF);
   spr.unloadFont();
-  spr.pushSprite(0, 0, TFT_TRANSPARENT);
-  spr.deleteSprite(); 
+  spr.pushSprite(0, 0);
+  spr.deleteSprite();
 }
 
 void writeBaro() {
-  
+
   // Draw Sensor Output
 
   String fontSmall = "Interceptor28";
   String fontLarge  = "Interceptor72";
-  // draw titles
-  u8g2.setForegroundColor(TFT_RED); 
+  spr.createSprite(SPWIDTH, SPHEIGHT);
+  spr.fillSprite(TFT_BLACK);
+  u8g2.setForegroundColor(TFT_RED);
   u8g2.setCursor(0, 20);
   u8g2.print("Pressure (inHg)");
   u8g2.setFont(u8g2_font_helvR14_tr);
-  // draw line
-  tft.drawFastHLine(0, 30, 240, TFT_CYAN);
-  // draw the numbers as a transparent sprite to prevent flicker
-  spr.createSprite(SPWIDTH, SPHEIGHT);
-  spr.fillSprite(TFT_TRANSPARENT);
-  spr.fillRect(0, 31, 239, 134, TFT_BLACK);   
+  //  u8g2.drawStr (119 - (u8g2.getUTF8Width("Pressure")/2), 20, "Pressure");
+  spr.drawFastHLine(0, 30, 240, TFT_CYAN);
   spr.setTextColor(TFT_CYAN);
   spr.loadFont(fontLarge);
   spr.drawRightString(cBaro, 119, 60, GFXFF);
@@ -192,16 +184,169 @@ void writeBaro() {
   spr.deleteSprite();
 }
 
+void transHumid() {
+
+  // Draw Sensor Output
+
+  String fontSmall = "Interceptor28";
+  String fontLarge  = "Interceptor72";
+  spr.createSprite(SPWIDTH, SPHEIGHT);
+  u8g2.setForegroundColor(TFT_RED);
+  u8g2.setFont(u8g2_font_helvR14_tf);
+  u8g2.setFontMode(1);
+  u8g2.setCursor(0, 20);
+  u8g2.print("Temperature (°F)");
+  //  u8g2.drawStr (119 - (u8g2.getUTF8Width("Temperature")/2), 20, "Temperature");
+  u8g2.setCursor(0, 73);
+  u8g2.print("Hi:");
+  u8g2.setCursor(0, 113);
+  u8g2.print("Lo:");
+  spr.drawFastHLine(0, 30, 239, TFT_CYAN);
+  spr.drawFastVLine(95, 30, 105, TFT_CYAN);
+  spr.setTextColor(TFT_CYAN);
+  spr.loadFont(fontSmall);
+  spr.drawRightString(cTempHi, 85, 55, GFXFF);
+  spr.drawRightString(cTempLo, 85, 95, GFXFF);
+  spr.unloadFont();
+  spr.loadFont(fontLarge);
+  spr.drawRightString(cTempF, 239, 60, GFXFF);
+  spr.unloadFont();
+  spr1.createSprite(SPWIDTH, SPHEIGHT);
+  u8g2x.setForegroundColor(TFT_RED);
+  u8g2x.setFont(u8g2_font_helvR14_tr);
+  u8g2x.setFontMode(1);
+  u8g2x.setCursor(0, 20);
+  u8g2x.print("Humidity (%)");
+  //  u8g2.drawStr (119 - (u8g2.getUTF8Width("Humidity")/2), 20, "Humidity");
+  u8g2x.setCursor(0, 73);
+  u8g2x.print("Hi:");
+  u8g2x.setCursor(0, 113);
+  u8g2x.print("Lo:");
+  spr1.drawFastHLine(0, 30, 239, TFT_CYAN);
+  spr1.drawFastVLine(95, 30, 105, TFT_CYAN);
+  spr1.setTextColor(TFT_CYAN);
+  spr1.loadFont(fontSmall);
+  spr1.drawRightString(cHumidHi, 85, 55, GFXFF);
+  spr1.drawRightString(cHumidLo, 85, 95, GFXFF);
+  spr1.unloadFont();
+  spr1.loadFont(fontLarge);
+  spr1.drawRightString(cHumid, 239, 60, GFXFF);
+  spr1.unloadFont();
+  for (int ypos = SPHEIGHT; ypos > 0; ypos -= 2) {
+    spr.pushSprite(0, (ypos - 2) - SPHEIGHT);
+    spr1.pushSprite(0, ypos - 2);
+  }
+  spr.deleteSprite();
+  spr1.deleteSprite();
+}
+
+void transBaro() {
+
+  // Draw Sensor Output
+
+  String fontSmall = "Interceptor28";
+  String fontLarge  = "Interceptor72";
+  spr.createSprite(SPWIDTH, SPHEIGHT);
+  spr.fillSprite(TFT_BLACK);
+  u8g2.setForegroundColor(TFT_RED);
+  u8g2.setFont(u8g2_font_helvR14_tr);
+  u8g2.setFontMode(1);
+  u8g2.setCursor(0, 20);
+  u8g2.print("Humidity (%)");
+  //  u8g2.drawStr (119 - (u8g2.getUTF8Width("Humidity")/2), 20, "Humidity");
+  u8g2.setCursor(0, 73);
+  u8g2.print("Hi:");
+  u8g2.setCursor(0, 113);
+  u8g2.print("Lo:");
+  spr.drawFastHLine(0, 30, 239, TFT_CYAN);
+  spr.drawFastVLine(95, 30, 105, TFT_CYAN);
+  spr.setTextColor(TFT_CYAN);
+  spr.loadFont(fontSmall);
+  spr.drawRightString(cHumidHi, 85, 55, GFXFF);
+  spr.drawRightString(cHumidLo, 85, 95, GFXFF);
+  spr.unloadFont();
+  spr.loadFont(fontLarge);
+  spr.drawRightString(cHumid, 239, 60, GFXFF);
+  spr.unloadFont();
+  spr1.createSprite(SPWIDTH, SPHEIGHT);
+  spr1.fillSprite(TFT_BLACK);
+  u8g2x.setForegroundColor(TFT_RED);
+  u8g2x.setCursor(0, 20);
+  u8g2x.print("Pressure (inHg)");
+  u8g2x.setFont(u8g2_font_helvR14_tr);
+  //  u8g2.drawStr (119 - (u8g2.getUTF8Width("Pressure")/2), 20, "Pressure");
+  spr1.drawFastHLine(0, 30, 240, TFT_CYAN);
+  spr1.setTextColor(TFT_CYAN);
+  spr1.loadFont(fontLarge);
+  spr1.drawRightString(cBaro, 119, 60, GFXFF);
+  spr1.unloadFont();
+  for (int ypos = SPHEIGHT; ypos > 0; ypos -= 2) {
+    spr.pushSprite(0, (ypos - 2) - SPHEIGHT);
+    spr1.pushSprite(0, ypos - 2);
+  }
+  spr.deleteSprite();
+  spr1.deleteSprite();
+}
+
+void transTemp() {
+  // Draw Sensor Output
+
+  String fontSmall = "Interceptor28";
+  String fontLarge  = "Interceptor72";
+  spr.createSprite(SPWIDTH, SPHEIGHT);
+  spr.fillSprite(TFT_BLACK);
+  u8g2.setForegroundColor(TFT_RED);
+  u8g2.setCursor(0, 20);
+  u8g2.print("Pressure (inHg)");
+  u8g2.setFont(u8g2_font_helvR14_tr);
+  //  u8g2.drawStr (119 - (u8g2.getUTF8Width("Pressure")/2), 20, "Pressure");
+  spr.drawFastHLine(0, 30, 240, TFT_CYAN);
+  spr.setTextColor(TFT_CYAN);
+  spr.loadFont(fontLarge);
+  spr.drawRightString(cBaro, 119, 60, GFXFF);
+  spr.unloadFont();
+  spr1.createSprite(SPWIDTH, SPHEIGHT);
+  u8g2x.setForegroundColor(TFT_RED);
+  u8g2x.setFont(u8g2_font_helvR14_tf);
+  u8g2x.setFontMode(1);
+  u8g2x.setCursor(0, 20);
+  u8g2x.print("Temperature (°F)");
+  //  u8g2.drawStr (119 - (u8g2.getUTF8Width("Temperature")/2), 20, "Temperature");
+  u8g2x.setCursor(0, 73);
+  u8g2x.print("Hi:");
+  u8g2x.setCursor(0, 113);
+  u8g2x.print("Lo:");
+  spr1.drawFastHLine(0, 30, 239, TFT_CYAN);
+  spr1.drawFastVLine(95, 30, 105, TFT_CYAN);
+  spr1.setTextColor(TFT_CYAN);
+  spr1.loadFont(fontSmall);
+  spr1.drawRightString(cTempHi, 85, 55, GFXFF);
+  spr1.drawRightString(cTempLo, 85, 95, GFXFF);
+  spr1.unloadFont();
+  spr1.loadFont(fontLarge);
+  spr1.drawRightString(cTempF, 239, 60, GFXFF);
+  spr1.unloadFont();
+  for (int ypos = SPHEIGHT; ypos > 0; ypos -= 2) {
+    spr.pushSprite(0, (ypos - 2) - SPHEIGHT);
+    spr1.pushSprite(0, ypos - 2);
+  }
+  spr.deleteSprite();
+  spr1.deleteSprite();
+}
+
 void drawScreen() {
 
    readSensors();                          // read the sensors and calculate values
 
-   if (displayMode > 3) displayMode = 1;   // roll over the display mode back to 1
+   if (displayMode > 6) displayMode = 1;   // roll over the display mode back to 1
 
   switch (displayMode) {                   // select display mode
     case 1: writeTemp(); break;
-    case 2: writeHumid(); break;
-    case 3: writeBaro(); break;
+    case 2: transHumid(); displayMode = 3; break;
+    case 3: writeHumid(); break;
+    case 4: transBaro(); displayMode = 5; break;
+    case 5: writeBaro(); break;
+    case 6: transTemp(); displayMode = 1; break;
   }
 }
 
@@ -211,6 +356,7 @@ button1.read();                            // read the button
 long now = millis();
 if (now - lastUpdate > 60000) {            // update the current display at this interval in ms
     lastUpdate = now;
+    displayMode++;
     drawScreen();
   }
 }
